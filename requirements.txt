@@ -1,0 +1,5 @@
+pandas
+numpy
+num2words == 0.5.10
+spacy == 2.3.5
+gensim == 3.8.3

@@ -4,6 +4,10 @@ Created on Fri Oct 16 00:01:53 2020
 
 @author: Benny Mü
 """
+#%%
+#text = Preprocess_Pipeline()
+
+#%%
 import pandas as pd
 import numpy as np
 import re
@@ -24,13 +28,14 @@ from nltk.corpus import wordnet as wn
 from nltk.tokenize import WordPunctTokenizer
 from num2words import num2words
 import sys, glob, os, zipfile, itertools, random , datetime, collections
+from sklearn.base import BaseEstimator, TransformerMixin
 from tqdm.notebook import tqdm
 
 #parser.Defaults.stop_words |= {"my_new_stopword1","my_new_stopword2"} # add new stopwords #nlp.Defaults.stop_words.add("my_new_stopword")
 #parser.Defaults.stop_words -= {"my_new_stopword1", "my_new_stopword2"} # remove stopwords #nlp.Defaults.stop_words.remove("whatever")
 
-class Preprocess_Pipeline(): #BaseEstimator, TransformerMixin):
-    """Availible functions: PrePreProcesor, Normalizer, PosCleaner, Tokenizer, transform. | Methods can be fitted and reused, stored as pipeline until triggered by transform method.\n
+class Preprocess_Pipeline(BaseEstimator, TransformerMixin):
+    """Availible functions: PrePreProcesor, Normalizer(not availible for v1.01), PosCleaner, Tokenizer,fit, transform. | Methods can be fitted and reused, stored as pipeline until triggered by transform method.\n
     Note that not every order of Processors make logically sense.\n
     PrePreProcessor: Takes raw data as string. Pre-filters emails,websites,encoding erros and punctuation. For customization check functon.\n
     Normalizer: Takes raw data as string. For Info, check Package´s github: https://github.com/EFord36/normalise \n
@@ -49,7 +54,7 @@ class Preprocess_Pipeline(): #BaseEstimator, TransformerMixin):
       else: sys.exit("Check input type. Pipeline takes str, list, pd.Series. Input is of tpye: {}".format(type(data)))
     
 
-    def fit(self):
+    def fit(self,*parg, **kwarg):
       Pipline_stages_fitted = self.Pipline_stages
       #return Pipline_stages_fitted
       return self
@@ -64,14 +69,14 @@ class Preprocess_Pipeline(): #BaseEstimator, TransformerMixin):
             if stage == "PrePreProcessor": data = self._prepreprocessor(data,self.lower_case,self.letters_only,self.combined_pat)
             if stage == "Tokenizer": data = self._tokenizer(data, self.parser,  self.num_to_word, self.length_remove, self.stopword_remove, self.lemmatizer, self.to_sentence) 
             if stage == "PosCleaner": data = self._poscleaner(data,self.nlp,self.allowed_postags)
-            if stage == "Normalizer": data = self._normalizer(data,self.variety,self.user_abbrevs)
+
 
       if (not input_type == "str") and (self.verbose == False):
         for stage in Pipline_stages:
             if stage == "PrePreProcessor": data = data.apply(lambda text: self._prepreprocessor(text,self.lower_case,self.letters_only,self.combined_pat))
             if stage == "Tokenizer": data = data.apply(lambda text: self._tokenizer(text, self.parser, self.num_to_word, self.length_remove, self.stopword_remove, self.lemmatizer, self.to_sentence))
             if stage == "PosCleaner": data = data.apply(lambda text: self._poscleaner(text,self.nlp,self.allowed_postags))
-            if stage == "Normalizer": data = data.apply(lambda text: self._normalizer(text,self.variety,self.user_abbrevs))
+            
 
       if (not input_type == "str") and (self.verbose == True):
         for stage in Pipline_stages:
@@ -84,9 +89,7 @@ class Preprocess_Pipeline(): #BaseEstimator, TransformerMixin):
             if stage == "PosCleaner":
               tqdm.pandas(desc=stage)
               data = data.progress_apply(lambda text: self._poscleaner(text,self.nlp,self.allowed_postags))
-            if stage == "Normalizer":
-              tqdm.pandas(desc=stage)
-              data = data.progress_apply(lambda text: self._normalizer(text,self.variety,self.user_abbrevs))
+            
       self.Pipline_stages
       return data 
 
@@ -111,20 +114,6 @@ class Preprocess_Pipeline(): #BaseEstimator, TransformerMixin):
       if letters_only == False: text = re.sub("[^a-zA-Z0-9]", " ", text) 
       #print(text)    
       return text
-
-    # def Normalizer(self,variety="BrE",user_abbrevs={}):
-    #   """For Info, check Package´s github: https://github.com/EFord36/normalise."""
-    #   self.variety = variety
-    #   self.user_abbrevs = user_abbrevs
-    #   if not "Normalizer" in self.Pipline_stages: self.Pipline_stages.append("Normalizer")
-    #   #return self #Preprocess_Pipeline(text)
-
-    # def _normalizer(self,text,variety,user_abbrevs):
-    #     # some issues within normalise package
-    #     try: return ' '.join(normalise(text,variety=self.variety,user_abbrevs=self.user_abbrevs,verbose=False))
-    #     except NameError: 
-    #       sys.exit("Check if Normalizer package is installed and imported as 'normalise'")
-    #     else: return text
 
     def PosCleaner(self,spacy_model = "en_core_web_sm",allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
       """spacy_model: takes string of model, for different language models. | allowed_postags: Define which Part of Speech should NOT be filtered.\n

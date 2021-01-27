@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Project Repo for Nudge 
 
 @author: Bennimi
 """
 
-# init all .py packages
+# init all .py 
 
 __all__ = ['TextProcessor']
 
